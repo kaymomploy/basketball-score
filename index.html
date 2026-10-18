@@ -403,10 +403,26 @@
     </div>
     <div id="timerOptions" style="display:none">
       <div class="quarter-btns" id="qTimeBtns">
+        <button onclick="selQTime(this,60)">1 นาที</button>
+        <button onclick="selQTime(this,3*60)">3 นาที</button>
         <button onclick="selQTime(this,5*60)">5 นาที</button>
-        <button onclick="selQTime(this,8*60)" class="sel">8 นาที</button>
-        <button onclick="selQTime(this,10*60)">10 นาที</button>
-        <button onclick="selQTime(this,12*60)">12 นาที</button>
+        <button onclick="selQTime(this,10*60)" class="sel">10 นาที</button>
+        <button onclick="selQTime(this,-1)" id="btnCustomTime">กำหนดเอง</button>
+      </div>
+      <div id="customTimeRow" style="display:none;margin-top:10px;display:none">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:12px;padding:10px 14px">
+          <input id="customSec" type="number" min="5" max="9999" placeholder="วินาที เช่น 90"
+            style="flex:1;background:transparent;border:none;color:var(--text);font-size:1rem;outline:none"
+            oninput="qTimeSec=parseInt(this.value)||60"/>
+          <span style="color:var(--muted);font-size:0.85rem">วินาที</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button onclick="setCustomSec(30)"  style="flex:1;padding:8px;border-radius:10px;border:none;background:var(--card3);color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">30วิ</button>
+          <button onclick="setCustomSec(45)"  style="flex:1;padding:8px;border-radius:10px;border:none;background:var(--card3);color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">45วิ</button>
+          <button onclick="setCustomSec(60)"  style="flex:1;padding:8px;border-radius:10px;border:none;background:var(--card3);color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">60วิ</button>
+          <button onclick="setCustomSec(90)"  style="flex:1;padding:8px;border-radius:10px;border:none;background:var(--card3);color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">90วิ</button>
+          <button onclick="setCustomSec(120)" style="flex:1;padding:8px;border-radius:10px;border:none;background:var(--card3);color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">2นาที</button>
+        </div>
       </div>
     </div>
   </div>
@@ -590,7 +606,19 @@ function selTarget(btn,val){
 }
 function selQTime(btn,sec){
   document.querySelectorAll('#qTimeBtns button').forEach(b=>b.classList.remove('sel'));
-  btn.classList.add('sel'); qTimeSec=sec;
+  btn.classList.add('sel');
+  if(sec===-1){
+    // กำหนดเอง
+    document.getElementById('customTimeRow').style.display='block';
+    qTimeSec=parseInt(document.getElementById('customSec').value)||60;
+  } else {
+    document.getElementById('customTimeRow').style.display='none';
+    qTimeSec=sec;
+  }
+}
+function setCustomSec(s){
+  document.getElementById('customSec').value=s;
+  qTimeSec=s;
 }
 function toggleTimer(){
   useTimer=!useTimer;
