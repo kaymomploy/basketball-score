@@ -403,10 +403,10 @@
     </div>
     <div id="timerOptions" style="display:none">
       <div class="quarter-btns" id="qTimeBtns">
+        <button onclick="selQTime(this,12)" class="sel">12 วิ</button>
+        <button onclick="selQTime(this,30)">30 วิ</button>
         <button onclick="selQTime(this,60)">1 นาที</button>
-        <button onclick="selQTime(this,3*60)">3 นาที</button>
         <button onclick="selQTime(this,5*60)">5 นาที</button>
-        <button onclick="selQTime(this,10*60)" class="sel">10 นาที</button>
         <button onclick="selQTime(this,-1)" id="btnCustomTime">กำหนดเอง</button>
       </div>
       <div id="customTimeRow" style="display:none;margin-top:10px;display:none">
@@ -528,7 +528,7 @@ let mode = '1v1';           // '1v1' | 'rr'
 let playerNames = ['ผู้เล่น 1','ผู้เล่น 2'];
 let target = 15;
 let useTimer = false;
-let qTimeSec = 8*60;
+let qTimeSec = 12;
 
 // 1v1 game state
 let scores = [0,0];
