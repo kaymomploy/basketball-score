@@ -2,988 +2,661 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-<meta name="apple-mobile-web-app-title" content="BballScore"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Bball12s"/>
 <meta name="theme-color" content="#000000"/>
 <link rel="manifest" href="manifest.json"/>
-<title>🏀 Basketball Score</title>
+<title>🏀 1-on-1 Basketball 12s</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0a0a0a;--card:#161616;--card2:#1e1e1e;--card3:#2a2a2a;
-  --text:#ffffff;--muted:#888;--subtle:#444;
-  --orange:#e8622a;--orange2:#ff7c42;
+  --bg:#070709;--card:#141418;--card2:#1b1b22;--card3:#262632;
+  --text:#ffffff;--muted:#8e8e99;--subtle:#555562;
+  --orange:#ff5e00;--orange-glow:rgba(255,94,0,0.35);
   --red:#ff453a;--blue:#0a84ff;--green:#30d158;--yellow:#ffd60a;
 }
 
 body{
   background:var(--bg);color:var(--text);
-  font-family:-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;
   min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;
-  max-width:430px;margin:0 auto;
+  max-width:440px;margin:0 auto;user-select:none;
 }
 
-/* ── STATUS BAR AREA ── */
-.status-bar{
-  height:env(safe-area-inset-top,0px);
-  background:#000;
-}
-
-/* ── NAV ── */
-.nav{
-  background:#000;
-  padding:10px 16px 8px;
+/* ── HEADER ── */
+.top-bar{
+  padding:calc(env(safe-area-inset-top,8px) + 8px) 16px 10px;
   display:flex;align-items:center;justify-content:space-between;
+  background:#000;border-bottom:1px solid rgba(255,255,255,0.06);
 }
-.nav-title{
-  font-size:1.2rem;font-weight:800;letter-spacing:-.5px;
+.app-logo{font-size:1.15rem;font-weight:900;letter-spacing:-.5px;display:flex;align-items:center;gap:6px}
+.app-logo span{color:var(--orange)}
+.nav-pills{display:flex;background:var(--card2);padding:2px;border-radius:10px}
+.nav-pill{
+  padding:6px 14px;border:none;background:transparent;color:var(--muted);
+  font-size:0.8rem;font-weight:700;border-radius:8px;cursor:pointer;transition:all .15s
 }
-.nav-title span{color:var(--orange)}
-.nav-tabs{display:flex;gap:0;background:var(--card2);border-radius:8px;padding:2px}
-.nav-tab{
-  padding:5px 14px;border-radius:6px;border:none;
-  background:transparent;color:var(--muted);
-  font-size:0.78rem;font-weight:600;cursor:pointer;transition:all .2s
-}
-.nav-tab.active{background:var(--card3);color:var(--text)}
+.nav-pill.active{background:var(--card3);color:#fff}
 
 /* ── PAGES ── */
 .page{display:none;flex:1;flex-direction:column;overflow:hidden}
 .page.active{display:flex}
 
 /* ════════════════════════════════
-   SETUP PAGE
+   GAME PAGE (1-on-1 with 12s Shot Clock)
 ════════════════════════════════ */
-.setup-wrap{flex:1;overflow-y:auto;padding:12px 16px 32px;display:flex;flex-direction:column;gap:14px}
-
-.setup-section{
-  background:var(--card);border-radius:16px;overflow:hidden;
-}
-.setup-section-title{
-  padding:10px 14px 6px;
-  font-size:0.68rem;font-weight:700;letter-spacing:1.5px;
-  text-transform:uppercase;color:var(--muted)
+.game-view{
+  flex:1;display:flex;flex-direction:column;position:relative;background:linear-gradient(180deg,#100803 0%,#070709 50%);
 }
 
-/* Mode selector */
-.mode-pills{display:flex;gap:8px;padding:6px 14px 14px}
-.mode-pill{
-  flex:1;padding:13px 8px;border-radius:12px;
-  border:1.5px solid var(--subtle);background:transparent;
-  color:var(--muted);font-size:0.82rem;font-weight:700;
-  cursor:pointer;text-align:center;transition:all .2s;
-}
-.mode-pill .pill-icon{font-size:1.4rem;display:block;margin-bottom:4px}
-.mode-pill.on{
-  border-color:var(--orange);background:rgba(232,98,42,.12);color:var(--text)
+/* Ambient glow */
+.ambient-glow{
+  position:absolute;top:-50px;left:50%;transform:translateX(-50%);
+  width:260px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,var(--orange-glow) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
 }
 
-/* Player rows */
-.player-rows{padding:0 0 8px}
-.player-row{
-  display:flex;align-items:center;gap:10px;
-  padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.05)
+/* Header Game Status */
+.court-status{
+  padding:8px 16px;display:flex;align-items:center;justify-content:space-between;
+  position:relative;z-index:1;font-size:0.75rem;font-weight:700;color:var(--muted);
 }
-.player-row:last-child{border-bottom:none}
-.player-avatar{
-  width:36px;height:36px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.75rem;font-weight:800;flex-shrink:0;color:#fff
+.sound-toggle-btn{
+  background:rgba(255,255,255,0.08);border:none;color:#fff;
+  padding:4px 10px;border-radius:20px;font-size:0.75rem;cursor:pointer;
 }
-.player-row input{
-  flex:1;background:transparent;border:none;
-  font-size:0.95rem;color:var(--text);outline:none;
-  font-family:inherit
-}
-.player-row input::placeholder{color:var(--subtle)}
 
-/* Target */
-.target-grid{display:flex;gap:6px;padding:6px 14px 14px;flex-wrap:wrap}
-.target-pill{
-  flex:1;min-width:50px;padding:9px 4px;border-radius:10px;
-  border:1.5px solid var(--subtle);background:transparent;
-  color:var(--muted);font-size:0.82rem;font-weight:700;
-  cursor:pointer;transition:all .15s;text-align:center
+/* SHOT CLOCK (HERO) */
+.shot-clock-section{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 16px;position:relative;z-index:1;
 }
-.target-pill.on{border-color:var(--orange);background:rgba(232,98,42,.12);color:var(--text)}
+.shot-clock-title{
+  font-size:0.7rem;font-weight:800;letter-spacing:2px;
+  text-transform:uppercase;color:var(--orange);margin-bottom:2px;
+}
+.shot-clock-display{
+  font-size:5.8rem;font-weight:900;line-height:1;letter-spacing:-2px;
+  font-variant-numeric:tabular-nums;color:#fff;
+  text-shadow:0 0 35px var(--orange-glow);cursor:pointer;
+  transition:transform .08s,color .2s;
+}
+.shot-clock-display:active{transform:scale(0.95)}
+.shot-clock-display.danger{
+  color:var(--red);text-shadow:0 0 45px rgba(255,69,58,0.7);animation:shake .15s infinite alternate;
+}
+@keyframes shake{0%{transform:translateX(-2px)}100%{transform:translateX(2px)}}
 
-/* Timer */
-.timer-toggle-row{
+.clock-quick-actions{
+  display:flex;gap:8px;margin-top:6px;align-items:center;
+}
+.btn-clock{
+  background:rgba(255,255,255,0.1);border:none;color:#fff;
+  padding:7px 16px;border-radius:20px;font-size:0.8rem;font-weight:700;
+  cursor:pointer;transition:background .15s;backdrop-filter:blur(8px);
+}
+.btn-clock:active{background:rgba(255,255,255,0.25)}
+.btn-clock.reset-highlight{
+  background:var(--orange);color:#fff;box-shadow:0 2px 14px var(--orange-glow);
+}
+
+/* PLAYERS MATCHUP */
+.matchup-container{
+  flex:1;display:flex;padding:6px 12px;gap:8px;position:relative;z-index:1;
+}
+.player-box{
+  flex:1;background:var(--card);border-radius:18px;padding:12px 10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  border:1.5px solid transparent;position:relative;overflow:hidden;
+}
+.player-box.offense{
+  border-color:var(--orange);background:linear-gradient(180deg,rgba(255,94,0,0.1) 0%,var(--card) 60%);
+}
+.player-box.defense{
+  border-color:rgba(10,132,255,0.4);background:linear-gradient(180deg,rgba(10,132,255,0.06) 0%,var(--card) 60%);
+}
+
+.role-badge{
+  font-size:0.62rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;margin-bottom:4px;
+}
+.offense .role-badge{background:var(--orange);color:#fff}
+.defense .role-badge{background:var(--blue);color:#fff}
+
+.p-name-txt{
+  font-size:1.05rem;font-weight:800;color:#fff;text-align:center;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.p-score-big{
+  font-size:3.6rem;font-weight:900;line-height:1;margin:6px 0;
+  font-variant-numeric:tabular-nums;
+}
+.offense .p-score-big{color:#fff;text-shadow:0 0 20px var(--orange-glow)}
+.defense .p-score-big{color:var(--muted)}
+
+.pt-btns{
+  display:flex;gap:4px;width:100%;
+}
+.btn-pt{
+  flex:1;padding:11px 0;border-radius:10px;border:none;
+  background:var(--card2);color:#fff;font-size:0.88rem;font-weight:800;
+  cursor:pointer;transition:transform .1s,background .15s;
+}
+.btn-pt:active{transform:scale(0.92);background:var(--orange)}
+
+/* FAST COURT CONTROLS */
+.court-controls{
+  padding:10px 14px calc(env(safe-area-inset-bottom,8px) + 8px);
+  background:#000;display:flex;flex-direction:column;gap:8px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.court-action-row{display:flex;gap:8px}
+.btn-big-action{
+  flex:1;padding:15px 10px;border-radius:14px;border:none;
+  font-size:0.95rem;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform .1s,opacity .15s;
+}
+.btn-big-action:active{transform:scale(0.96)}
+.btn-scored{
+  background:var(--green);color:#000;box-shadow:0 4px 18px rgba(48,209,88,0.3);
+}
+.btn-missed{
+  background:rgba(255,255,255,0.12);color:#fff;
+}
+.btn-rotate{
+  background:var(--blue);color:#fff;box-shadow:0 4px 18px rgba(10,132,255,0.3);
+}
+
+/* BENCH / QUEUE STRIP */
+.queue-strip{
   display:flex;align-items:center;justify-content:space-between;
-  padding:13px 14px;
+  padding:8px 14px;background:var(--card2);border-radius:12px;font-size:0.75rem;
 }
-.timer-toggle-label{font-size:0.92rem;font-weight:600}
-.ios-toggle{
-  width:50px;height:28px;border-radius:14px;background:var(--subtle);
-  position:relative;cursor:pointer;transition:background .25s;flex-shrink:0
+.queue-label{color:var(--muted);font-weight:700}
+.queue-list{display:flex;gap:6px;align-items:center}
+.queue-chip{
+  background:var(--card3);padding:3px 8px;border-radius:6px;font-weight:700;color:#ddd;
 }
-.ios-toggle::after{
-  content:'';width:22px;height:22px;border-radius:11px;background:#fff;
-  position:absolute;top:3px;left:3px;transition:left .25s;
-  box-shadow:0 2px 6px rgba(0,0,0,0.4)
-}
-.ios-toggle.on{background:var(--green)}
-.ios-toggle.on::after{left:25px}
-
-.timer-presets{
-  display:flex;gap:6px;padding:0 14px 14px;border-top:1px solid rgba(255,255,255,0.05);
-  padding-top:12px;
-}
-.timer-preset{
-  flex:1;padding:9px 2px;border-radius:10px;
-  border:1.5px solid var(--subtle);background:transparent;
-  color:var(--muted);font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .15s
-}
-.timer-preset.on{border-color:var(--green);background:rgba(48,209,88,.1);color:var(--text)}
-
-.custom-time-box{
-  margin:0 14px 14px;
-  background:var(--card2);border-radius:12px;padding:10px 14px;
-  display:flex;align-items:center;gap:8px
-}
-.custom-time-box input{
-  flex:1;background:transparent;border:none;
-  color:var(--text);font-size:1rem;outline:none;font-family:inherit
-}
-.custom-time-box span{color:var(--muted);font-size:0.85rem;white-space:nowrap}
-.quick-secs{display:flex;gap:5px;padding:0 14px 14px;flex-wrap:wrap}
-.quick-sec{
-  padding:7px 12px;border-radius:8px;border:none;
-  background:var(--card2);color:var(--muted);
-  font-size:0.78rem;font-weight:700;cursor:pointer
-}
-
-.start-btn{
-  margin:0 16px;padding:16px;border-radius:14px;border:none;
-  background:var(--orange);color:#fff;
-  font-size:1rem;font-weight:800;cursor:pointer;letter-spacing:.3px;
-  box-shadow:0 8px 28px rgba(232,98,42,.45);transition:transform .1s
-}
-.start-btn:active{transform:scale(.97)}
+.queue-chip.next{background:rgba(255,94,0,0.25);color:var(--orange);border:1px solid var(--orange)}
 
 /* ════════════════════════════════
-   GAME PAGE — Apple Sports Style
+   SETTINGS & PLAYERS
 ════════════════════════════════ */
-.game-page{background:var(--bg);overflow:hidden}
+.settings-wrap{flex:1;overflow-y:auto;padding:16px 14px 40px;display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--card);border-radius:16px;overflow:hidden}
+.panel-head{padding:12px 14px 6px;font-size:0.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.input-group{padding:6px 12px 14px;display:flex;flex-direction:column;gap:8px}
+.p-input-line{
+  display:flex;align-items:center;gap:10px;background:var(--card2);padding:10px 14px;border-radius:12px;
+}
+.p-input-line span{font-size:1.1rem}
+.p-input-line input{
+  flex:1;background:transparent;border:none;color:#fff;font-size:0.95rem;outline:none;
+}
+.sec-selector{
+  display:flex;gap:6px;padding:6px 12px 14px;
+}
+.btn-sec-sel{
+  flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid var(--subtle);
+  background:transparent;color:var(--muted);font-weight:800;font-size:0.85rem;cursor:pointer;
+}
+.btn-sec-sel.active{border-color:var(--orange);color:#fff;background:rgba(255,94,0,0.15)}
 
-/* Gradient hero background */
-.game-hero{
-  position:relative;overflow:hidden;
-  background:linear-gradient(160deg,#1a0a00 0%,#2d1200 40%,#0d0d0d 100%);
-  flex:1;display:flex;flex-direction:column;
+.btn-start-game{
+  padding:16px;border-radius:14px;border:none;background:var(--orange);
+  color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px var(--orange-glow);
 }
-.hero-glow-left{
-  position:absolute;top:-60px;left:-40px;
-  width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(232,98,42,.35) 0%,transparent 70%);
-  pointer-events:none
-}
-.hero-glow-right{
-  position:absolute;top:-60px;right:-40px;
-  width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(10,132,255,.25) 0%,transparent 70%);
-  pointer-events:none
-}
-
-/* Game top bar */
-.game-topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 16px 0;position:relative;z-index:1
-}
-.game-meta{text-align:center;flex:1}
-.game-meta-label{
-  font-size:0.62rem;font-weight:700;letter-spacing:2px;
-  text-transform:uppercase;color:rgba(255,255,255,.45)
-}
-.game-meta-val{
-  font-size:0.8rem;font-weight:700;color:rgba(255,255,255,.75);margin-top:2px
-}
-.g-icon-btn{
-  width:34px;height:34px;border-radius:50%;
-  background:rgba(255,255,255,.1);border:none;
-  color:#fff;font-size:0.9rem;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .15s;backdrop-filter:blur(10px)
-}
-.g-icon-btn:active{background:rgba(255,255,255,.2)}
-
-/* Timer strip */
-.timer-strip{
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:8px 16px 0;position:relative;z-index:1
-}
-.timer-strip.hidden{display:none}
-.q-badge{
-  background:rgba(255,255,255,.12);border-radius:6px;
-  padding:3px 8px;font-size:0.7rem;font-weight:800;
-  letter-spacing:.5px;backdrop-filter:blur(10px)
-}
-.timer-clock{
-  font-size:1.5rem;font-weight:900;letter-spacing:3px;
-  font-variant-numeric:tabular-nums
-}
-.timer-clock.warn{color:var(--red);animation:blink 1s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
-.timer-play-btn{
-  width:30px;height:30px;border-radius:50%;border:none;
-  background:rgba(255,255,255,.15);color:#fff;
-  font-size:0.85rem;cursor:pointer;backdrop-filter:blur(10px);
-  display:flex;align-items:center;justify-content:center
-}
-.q-next-btn{
-  background:none;border:none;color:rgba(255,255,255,.5);
-  font-size:0.7rem;font-weight:700;cursor:pointer;letter-spacing:.5px
-}
-
-/* Main scores */
-.scores-area{
-  display:flex;align-items:center;flex:1;
-  padding:0 16px;position:relative;z-index:1
-}
-.score-side{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:8px
-}
-.score-player-name{
-  font-size:0.8rem;font-weight:700;letter-spacing:.3px;
-  color:rgba(255,255,255,.6);text-align:center;
-  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
-.score-player-name.p1{color:rgba(255,160,100,.9)}
-.score-player-name.p2{color:rgba(100,180,255,.9)}
-.score-big{
-  font-size:7rem;font-weight:900;line-height:1;
-  letter-spacing:-4px;
-}
-.score-big.p1{
-  color:#fff;
-  text-shadow:0 0 60px rgba(232,98,42,.6)
-}
-.score-big.p2{
-  color:#fff;
-  text-shadow:0 0 60px rgba(10,132,255,.4)
-}
-.score-big.bump{animation:sbump .15s cubic-bezier(.17,.67,.4,1.3)}
-@keyframes sbump{0%{transform:scale(1.2)}100%{transform:scale(1)}}
-
-.score-divider{
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:0 8px
-}
-.score-divider-line{width:1px;height:50px;background:rgba(255,255,255,.1)}
-.score-divider-dot{
-  width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2)
-}
-
-/* Add score buttons */
-.add-row{
-  display:flex;gap:8px;width:100%;
-}
-.add-btn{
-  flex:1;padding:11px 4px;border-radius:12px;border:none;
-  font-size:0.9rem;font-weight:800;cursor:pointer;
-  transition:transform .1s;
-}
-.add-btn:active{transform:scale(.88)}
-.p1 .add-btn{background:rgba(232,98,42,.25);color:var(--orange2)}
-.p2 .add-btn{background:rgba(10,132,255,.2);color:#4da3ff}
-
-/* Bottom controls */
-.game-controls{
-  padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);
-  display:flex;gap:8px;background:rgba(0,0,0,.3);
-  backdrop-filter:blur(20px);position:relative;z-index:1;
-  border-top:1px solid rgba(255,255,255,.06)
-}
-.ctrl-btn{
-  flex:1;padding:11px 6px;border-radius:12px;border:none;
-  font-size:0.8rem;font-weight:700;cursor:pointer;transition:transform .1s
-}
-.ctrl-btn:active{transform:scale(.95)}
-.ctrl-undo{background:rgba(255,255,255,.09);color:rgba(255,255,255,.8)}
-.ctrl-reset{background:rgba(255,69,58,.15);color:var(--red)}
-.ctrl-end{background:var(--orange);color:#fff;box-shadow:0 4px 16px rgba(232,98,42,.4)}
+.btn-start-game:active{transform:scale(0.97)}
 
 /* ════════════════════════════════
-   ROUND ROBIN PAGE
+   HISTORY & LEADERBOARD
 ════════════════════════════════ */
-.rr-wrap{flex:1;overflow-y:auto;padding:12px 16px 100px;display:flex;flex-direction:column;gap:10px}
+.hist-wrap{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.leader-card{background:var(--card);border-radius:16px;padding:14px}
+.leader-title{font-size:0.7rem;font-weight:800;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.l-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.l-row:last-child{border-bottom:none}
+.l-name{font-weight:700;font-size:0.95rem}
+.l-pts{font-weight:900;color:var(--orange)}
 
-.rr-close-btn{
-  background:rgba(255,255,255,.08);border:none;border-radius:8px;
-  padding:6px 12px;color:var(--muted);font-size:0.8rem;cursor:pointer
-}
-
-.card-block{background:var(--card);border-radius:16px;overflow:hidden}
-.card-title{
-  padding:10px 14px;font-size:0.65rem;font-weight:700;
-  letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);
-  border-bottom:1px solid rgba(255,255,255,.05)
-}
-
-/* Standings */
-.stand-row{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04)
-}
-.stand-row:last-child{border-bottom:none}
-.stand-rank{
-  width:24px;height:24px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.72rem;font-weight:800
-}
-.r1{background:linear-gradient(135deg,#b8860b,#ffd700);color:#000}
-.r2{background:linear-gradient(135deg,#808080,#c0c0c0);color:#000}
-.r3{background:linear-gradient(135deg,#8B4513,#CD853F);color:#fff}
-.r4{background:var(--card3);color:var(--muted)}
-.stand-name{flex:1;font-size:0.88rem;font-weight:700}
-.stand-stats{display:flex;gap:10px;font-size:0.75rem}
-.stat-val{color:var(--text);font-weight:700}
-.stat-lbl{color:var(--muted);font-size:0.65rem;margin-left:1px}
-
-/* Match cards */
-.match-item{
-  display:flex;align-items:center;padding:12px 14px;
-  border-bottom:1px solid rgba(255,255,255,.04);gap:8px;cursor:pointer
-}
-.match-item:last-child{border-bottom:none}
-.match-item.current{background:rgba(232,98,42,.08)}
-.match-item.done{opacity:.6}
-.match-item.pending{opacity:.35;cursor:default}
-.m-name{flex:1;font-size:0.85rem;font-weight:700;text-align:center}
-.m-name.left{text-align:right}
-.m-name.right{text-align:left}
-.m-score{
-  min-width:64px;text-align:center;
-  font-size:1.05rem;font-weight:900;letter-spacing:2px
-}
-.m-score.done-score{color:var(--text)}
-.m-score.vs-score{color:var(--subtle);font-size:0.8rem;letter-spacing:1px}
-.m-dot{
-  width:6px;height:6px;border-radius:50%;flex-shrink:0
-}
-.current .m-dot{background:var(--orange)}
-.done .m-dot{background:var(--green)}
-.pending .m-dot{background:var(--subtle)}
-
-.rr-start-btn{
-  position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
-  left:50%;transform:translateX(-50%);
-  width:calc(100% - 32px);max-width:398px;
-  padding:15px;border-radius:14px;border:none;
-  background:var(--orange);color:#fff;
-  font-size:1rem;font-weight:800;cursor:pointer;
-  box-shadow:0 8px 30px rgba(232,98,42,.5)
-}
-.rr-start-btn:disabled{background:var(--card3);color:var(--muted);box-shadow:none;cursor:default}
-
-/* ════════════════════════════════
-   HISTORY PAGE
-════════════════════════════════ */
-.hist-wrap{flex:1;overflow-y:auto;padding:12px 16px 32px;display:flex;flex-direction:column;gap:10px}
-.hist-empty{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;color:var(--muted);text-align:center
-}
-.hist-empty .big-icon{font-size:3rem}
-
-.leader-list{background:var(--card);border-radius:16px;overflow:hidden}
-.leader-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04)
-}
-.leader-row:last-child{border-bottom:none}
-.leader-left{display:flex;align-items:center;gap:8px;font-size:0.88rem;font-weight:600}
-.leader-wins{color:var(--orange);font-weight:800;font-size:0.88rem}
-
-.hist-card{
-  background:var(--card);border-radius:14px;
-  padding:12px 14px;display:flex;gap:10px;align-items:center
-}
-.hist-icon{font-size:1.5rem}
-.hist-info{flex:1}
-.hist-players{font-size:0.85rem;font-weight:700}
-.hist-result{font-size:0.78rem;color:var(--muted);margin-top:2px}
-.hist-date{font-size:0.68rem;color:var(--subtle);margin-top:2px}
-.hist-score-badge{
-  background:rgba(232,98,42,.15);color:var(--orange2);
-  border-radius:8px;padding:4px 10px;font-size:0.85rem;font-weight:800;
-  letter-spacing:1px
-}
-
-.clear-hist-btn{
-  background:rgba(255,69,58,.1);color:var(--red);border:1px solid rgba(255,69,58,.2);
-  border-radius:12px;padding:12px;font-size:0.85rem;font-weight:700;cursor:pointer;width:100%
-}
-
-/* ════════════════════════════════
-   WIN SCREEN
-════════════════════════════════ */
-.win-screen{
-  display:none;position:fixed;inset:0;z-index:200;
-  flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;padding:32px;
-  background:linear-gradient(160deg,#1a0800 0%,#0d0d0d 100%);
-}
-.win-screen.show{display:flex;animation:winIn .4s cubic-bezier(.17,.67,.4,1.3)}
-@keyframes winIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
-
-.win-confetti{font-size:2.5rem;letter-spacing:6px;margin-bottom:8px}
-.win-champ{
-  font-size:0.7rem;font-weight:800;letter-spacing:3px;
-  text-transform:uppercase;color:var(--orange);
-}
-.win-name{
-  font-size:2.8rem;font-weight:900;letter-spacing:-1px;
-  color:#fff;text-align:center;line-height:1.1;
-  text-shadow:0 0 60px rgba(232,98,42,.5)
-}
-.win-score-txt{
-  font-size:0.95rem;color:rgba(255,255,255,.4);margin-top:4px
-}
-.win-divider{width:40px;height:2px;background:var(--orange);border-radius:2px;margin:8px 0}
-.win-btns{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px}
-.win-btns button{padding:15px;border-radius:14px;border:none;font-size:0.95rem;font-weight:800;cursor:pointer}
-.win-btn-main{background:var(--orange);color:#fff;box-shadow:0 6px 24px rgba(232,98,42,.4)}
-.win-btn-sec{background:rgba(255,255,255,.09);color:rgba(255,255,255,.8)}
-
-/* ── TOAST ── */
+/* TOAST */
 .toast{
-  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-  background:rgba(30,30,30,.96);color:#fff;backdrop-filter:blur(20px);
-  padding:9px 20px;border-radius:20px;font-size:0.82rem;
-  opacity:0;pointer-events:none;transition:opacity .2s;
-  z-index:300;white-space:nowrap;border:1px solid rgba(255,255,255,.1)
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background:rgba(25,25,30,0.95);color:#fff;padding:8px 18px;border-radius:20px;
+  font-size:0.82rem;font-weight:700;border:1px solid rgba(255,255,255,0.12);
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:999;
 }
 .toast.show{opacity:1}
-
-/* colors */
-.av0{background:#e8622a}.av1{background:#0a84ff}
-.av2{background:#30d158}.av3{background:#bf5af2}
 </style>
 </head>
 <body>
 
-<div class="status-bar"></div>
-
-<nav class="nav">
-  <div class="nav-title">🏀 <span>Score</span></div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showTab('setup')">ตั้งค่า</button>
-    <button class="nav-tab" onclick="showTab('game')"  id="navGame">เกม</button>
-    <button class="nav-tab" onclick="showTab('hist')">ประวัติ</button>
+<div class="top-bar">
+  <div class="app-logo">🏀 1-on-1 <span>12s</span></div>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="switchTab('game')">สนาม</button>
+    <button class="nav-pill" onclick="switchTab('settings')">ผู้เล่น</button>
+    <button class="nav-pill" onclick="switchTab('history')">สถิติ</button>
   </div>
-</nav>
+</div>
 
-<!-- ══ SETUP ══ -->
-<div class="page active" id="tab-setup">
-<div class="setup-wrap">
+<!-- ═══ GAME SCREEN (KING OF COURT) ═══ -->
+<div class="page active" id="tab-game">
+  <div class="game-view">
+    <div class="ambient-glow"></div>
 
-  <!-- Mode -->
-  <div class="setup-section">
-    <div class="setup-section-title">โหมด</div>
-    <div class="mode-pills">
-      <button class="mode-pill on" id="m1v1" onclick="setMode('1v1')">
-        <span class="pill-icon">👤</span>1 vs 1
-      </button>
-      <button class="mode-pill" id="mRR" onclick="setMode('rr')">
-        <span class="pill-icon">👥</span>Round Robin<br><small style="font-weight:500;font-size:.68rem">4 คน</small>
-      </button>
+    <div class="court-status">
+      <span id="matchInfo">👑 ครองแป้น: ยิงลงอยู่ต่อ</span>
+      <button class="sound-toggle-btn" id="soundBtn" onclick="toggleSound()">🔊 เสียง: เปิด</button>
     </div>
-  </div>
 
-  <!-- Players -->
-  <div class="setup-section">
-    <div class="setup-section-title">ผู้เล่น</div>
-    <div class="player-rows" id="playerRows"></div>
-  </div>
-
-  <!-- Target -->
-  <div class="setup-section">
-    <div class="setup-section-title">เป้าหมายแต้ม</div>
-    <div class="target-grid" id="targetGrid">
-      <button class="target-pill" onclick="selTarget(this,11)">11</button>
-      <button class="target-pill on" onclick="selTarget(this,15)">15</button>
-      <button class="target-pill" onclick="selTarget(this,21)">21</button>
-      <button class="target-pill" onclick="selTarget(this,30)">30</button>
-      <button class="target-pill" onclick="selTarget(this,0)">ไม่จำกัด</button>
-    </div>
-  </div>
-
-  <!-- Timer -->
-  <div class="setup-section">
-    <div class="timer-toggle-row">
-      <span class="timer-toggle-label">⏱️ นาฬิกาต่อควอร์เตอร์</span>
-      <div class="ios-toggle" id="timerToggle" onclick="toggleTimer()"></div>
-    </div>
-    <div id="timerOpts" style="display:none">
-      <div class="timer-presets" id="timerPresets">
-        <button class="timer-preset on" onclick="selT(this,12)">12วิ</button>
-        <button class="timer-preset" onclick="selT(this,30)">30วิ</button>
-        <button class="timer-preset" onclick="selT(this,60)">1นาที</button>
-        <button class="timer-preset" onclick="selT(this,5*60)">5นาที</button>
-        <button class="timer-preset" onclick="selT(this,-1)">กำหนดเอง</button>
+    <!-- SHOT CLOCK -->
+    <div class="shot-clock-section">
+      <div class="shot-clock-title">SHOT CLOCK</div>
+      <div class="shot-clock-display" id="clockNum" onclick="toggleClock()">12</div>
+      <div class="clock-quick-actions">
+        <button class="btn-clock" id="clockPlayBtn" onclick="toggleClock()">▶ เริ่ม</button>
+        <button class="btn-clock reset-highlight" onclick="resetClock(true)">↺ รีเซ็ต 12s</button>
+        <button class="btn-clock" onclick="resetClockTo(14)">14s</button>
       </div>
-      <div id="customBox" style="display:none">
-        <div class="custom-time-box">
-          <input id="customSec" type="number" min="5" max="9999"
-            placeholder="จำนวนวินาที เช่น 90"
-            oninput="qTimeSec=parseInt(this.value)||12"/>
-          <span>วินาที</span>
+    </div>
+
+    <!-- PLAYERS ON COURT -->
+    <div class="matchup-container">
+      <!-- Offense / King -->
+      <div class="player-box offense" id="p1Box">
+        <div class="role-badge">👑 คนบุก (ครองแป้น)</div>
+        <div class="p-name-txt" id="p1Name">ผู้เล่น 1</div>
+        <div class="p-score-big" id="p1Score">0</div>
+        <div class="pt-btns">
+          <button class="btn-pt" onclick="addPoint(0,1)">+1</button>
+          <button class="btn-pt" onclick="addPoint(0,2)">+2</button>
+          <button class="btn-pt" onclick="addPoint(0,3)">+3</button>
         </div>
-        <div class="quick-secs">
-          <button class="quick-sec" onclick="qs(30)">30วิ</button>
-          <button class="quick-sec" onclick="qs(45)">45วิ</button>
-          <button class="quick-sec" onclick="qs(60)">60วิ</button>
-          <button class="quick-sec" onclick="qs(90)">90วิ</button>
-          <button class="quick-sec" onclick="qs(120)">2นาที</button>
-          <button class="quick-sec" onclick="qs(300)">5นาที</button>
+      </div>
+
+      <!-- Defense / Challenger -->
+      <div class="player-box defense" id="p2Box">
+        <div class="role-badge">🛡️ คนรับ (ผู้ท้าชิง)</div>
+        <div class="p-name-txt" id="p2Name">ผู้เล่น 2</div>
+        <div class="p-score-big" id="p2Score">0</div>
+        <div class="pt-btns">
+          <button class="btn-pt" onclick="addPoint(1,1)">+1</button>
+          <button class="btn-pt" onclick="addPoint(1,2)">+2</button>
+          <button class="btn-pt" onclick="addPoint(1,3)">+3</button>
         </div>
       </div>
     </div>
   </div>
 
-  <button class="start-btn" onclick="handleStart()">▶ เริ่มเกม</button>
-</div>
-</div>
-
-<!-- ══ GAME ══ -->
-<div class="page game-page" id="tab-game">
-<div class="game-hero">
-  <div class="hero-glow-left"></div>
-  <div class="hero-glow-right"></div>
-
-  <div class="game-topbar">
-    <button class="g-icon-btn" onclick="undoScore()">↩</button>
-    <div class="game-meta">
-      <div class="game-meta-label" id="gMetaLabel">เป้าหมาย</div>
-      <div class="game-meta-val" id="gMetaVal">15 แต้ม</div>
-    </div>
-    <button class="g-icon-btn" onclick="confirmReset()">↺</button>
-  </div>
-
-  <div class="timer-strip hidden" id="timerStrip">
-    <span class="q-badge" id="qBadge">Q1</span>
-    <span class="timer-clock" id="timerClock">00:12</span>
-    <button class="timer-play-btn" id="tPlayBtn" onclick="timerToggle()">▶</button>
-    <button class="q-next-btn" onclick="nextQ()">Q+1 →</button>
-  </div>
-
-  <div class="scores-area">
-    <div class="score-side">
-      <div class="score-player-name p1" id="gN1">ผู้เล่น 1</div>
-      <div class="score-big p1" id="gS1">0</div>
-      <div class="add-row p1">
-        <button class="add-btn" onclick="addScore(1,1)">+1</button>
-        <button class="add-btn" onclick="addScore(1,2)">+2</button>
-        <button class="add-btn" onclick="addScore(1,3)">+3</button>
+  <!-- COURT CONTROLS -->
+  <div class="court-controls">
+    <!-- Queue Bar -->
+    <div class="queue-strip">
+      <span class="queue-label">คิวรอถัดไป:</span>
+      <div class="queue-list" id="benchQueue">
+        <span class="queue-chip next" id="benchNext">ผู้เล่น 3</span>
+        <span class="queue-chip" id="benchAfter">ผู้เล่น 4</span>
       </div>
     </div>
 
-    <div class="score-divider">
-      <div class="score-divider-line"></div>
-      <div class="score-divider-dot"></div>
-      <div class="score-divider-line"></div>
+    <!-- Actions for 12s 1-on-1 -->
+    <div class="court-action-row">
+      <button class="btn-big-action btn-scored" onclick="onShotScored()">
+        🏀 ยิงลง (+1 & ↺ 12s)
+      </button>
+      <button class="btn-big-action btn-missed" onclick="onShotMissed()">
+        ❌ ยิงไม่ลง (สลับคน)
+      </button>
     </div>
+    
+    <div class="court-action-row">
+      <button class="btn-big-action btn-rotate" onclick="rotateDefender()">
+        🔄 หมุนคนถัดไปขึ้นมา
+      </button>
+      <button class="btn-big-action" style="background:var(--card2);color:#aaa;flex:0.6" onclick="undoLast()">
+        ↩ ย้อนกลับ
+      </button>
+    </div>
+  </div>
+</div>
 
-    <div class="score-side">
-      <div class="score-player-name p2" id="gN2">ผู้เล่น 2</div>
-      <div class="score-big p2" id="gS2">0</div>
-      <div class="add-row p2">
-        <button class="add-btn" onclick="addScore(2,1)">+1</button>
-        <button class="add-btn" onclick="addScore(2,2)">+2</button>
-        <button class="add-btn" onclick="addScore(2,3)">+3</button>
+<!-- ═══ SETTINGS / PLAYERS ═══ -->
+<div class="page" id="tab-settings">
+  <div class="settings-wrap">
+    <div class="panel">
+      <div class="panel-head">รายชื่อผู้เล่น 4 คน (เรียงตามลำดับคิว)</div>
+      <div class="input-group">
+        <div class="p-input-line">
+          <span>👑</span>
+          <input type="text" id="nameIn0" value="ผู้เล่น 1" placeholder="คนครองแป้นแรก"/>
+        </div>
+        <div class="p-input-line">
+          <span>🛡️</span>
+          <input type="text" id="nameIn1" value="ผู้เล่น 2" placeholder="ผู้ท้าชิงแรก"/>
+        </div>
+        <div class="p-input-line">
+          <span>⏳</span>
+          <input type="text" id="nameIn2" value="ผู้เล่น 3" placeholder="คิวรอคนที่ 1"/>
+        </div>
+        <div class="p-input-line">
+          <span>⏳</span>
+          <input type="text" id="nameIn3" value="ผู้เล่น 4" placeholder="คิวรอคนที่ 2"/>
+        </div>
       </div>
     </div>
+
+    <div class="panel">
+      <div class="panel-head">เวลา Shot Clock เริ่มต้น</div>
+      <div class="sec-selector">
+        <button class="btn-sec-sel active" onclick="setDefaultSeconds(12,this)">12 วินาที</button>
+        <button class="btn-sec-sel" onclick="setDefaultSeconds(14,this)">14 วินาที</button>
+        <button class="btn-sec-sel" onclick="setDefaultSeconds(24,this)">24 วินาที</button>
+      </div>
+    </div>
+
+    <button class="btn-start-game" onclick="applySettingsAndStart()">
+      ✓ บันทึก & เริ่มเกม
+    </button>
   </div>
 </div>
 
-<div class="game-controls">
-  <button class="ctrl-btn ctrl-undo"  onclick="undoScore()">↩ Undo</button>
-  <button class="ctrl-btn ctrl-reset" onclick="confirmReset()">↺ Reset</button>
-  <button class="ctrl-btn ctrl-end"   onclick="endManual()">🏁 จบเกม</button>
-</div>
-</div>
-
-<!-- ══ ROUND ROBIN ══ -->
-<div class="page" id="tab-rr">
-<div class="rr-wrap">
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <div style="font-size:1rem;font-weight:800">🏆 Round Robin</div>
-    <button class="rr-close-btn" onclick="if(confirm('ยกเลิก?')){showTab('setup')}">✕ ยกเลิก</button>
-  </div>
-  <div class="card-block">
-    <div class="card-title">🥇 ตารางคะแนน</div>
-    <div id="rrStand"></div>
-  </div>
-  <div class="card-block">
-    <div class="card-title">📅 ตารางแมตช์</div>
-    <div id="rrMatches"></div>
-  </div>
-</div>
-<button class="rr-start-btn" id="rrBtn" onclick="playNextMatch()">▶ เริ่มแมตช์ถัดไป</button>
-</div>
-
-<!-- ══ HISTORY ══ -->
-<div class="page" id="tab-hist">
-<div class="hist-wrap" id="histWrap"></div>
-</div>
-
-<!-- WIN SCREEN -->
-<div class="win-screen" id="winScreen">
-  <div class="win-confetti">🎊🏆🎊</div>
-  <div class="win-champ">Champion</div>
-  <div class="win-name" id="winName">-</div>
-  <div class="win-score-txt" id="winScoreTxt">-</div>
-  <div class="win-divider"></div>
-  <div class="win-btns">
-    <button class="win-btn-main" onclick="winNewGame()">🔄 เกมใหม่ (ผู้เล่นเดิม)</button>
-    <button class="win-btn-sec"  onclick="winBack()">✏️ เปลี่ยนผู้เล่น</button>
+<!-- ═══ HISTORY & STATS ═══ -->
+<div class="page" id="tab-history">
+  <div class="hist-wrap">
+    <div class="leader-card">
+      <div class="leader-title">🏆 ลีดเดอร์บอร์ด (คะแนนรวมวันนี้)</div>
+      <div id="leaderboardList"></div>
+    </div>
+    <button class="btn-clock" style="background:rgba(255,69,58,0.15);color:var(--red);padding:12px;border-radius:12px" onclick="clearStats()">
+      🗑️ ล้างคะแนนทั้งหมด
+    </button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ══ STATE ══════════════════════════════════════
-const COLORS=['#e8622a','#0a84ff','#30d158','#bf5af2'];
-const AVBG=['av0','av1','av2','av3'];
-let mode='1v1';
-let pNames=['ผู้เล่น 1','ผู้เล่น 2'];
-let target=15;
-let useTimer=false;
-let qTimeSec=12;
-let scores=[0,0];
-let undoStack=[];
-let gameActive=false;
-let timerSec=12,timerOn=false,timerIv=null,curQ=1;
-let rrPlayers=[],rrMs=[],rrCurIdx=-1;
+// ══════════════════════════════════════════
+// AUDIO (WEB AUDIO API - ZERO ASSETS NEEDED)
+// ══════════════════════════════════════════
+let audioCtx = null;
+let soundEnabled = true;
 
-// ══ PWA ═══════════════════════════════════════
-if('serviceWorker' in navigator)
-  navigator.serviceWorker.register('./sw.js').catch(()=>{});
-
-// ══ WAKE LOCK ═══════════════════════════════════
-let wakeLock=null;
-async function keepAwake(){
-  try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
-}
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&gameActive) keepAwake();
-});
-
-// ══ INIT ═══════════════════════════════════════
-setMode('1v1');
-
-function setMode(m){
-  mode=m;
-  document.getElementById('m1v1').classList.toggle('on',m==='1v1');
-  document.getElementById('mRR').classList.toggle('on',m==='rr');
-  renderPlayerInputs();
-}
-
-function renderPlayerInputs(){
-  const n=mode==='1v1'?2:4;
-  let h='';
-  for(let i=0;i<n;i++){
-    const name=pNames[i]||`ผู้เล่น ${i+1}`;
-    const emojis=['🔴','🔵','🟢','🟣'];
-    h+=`<div class="player-row">
-      <div class="player-avatar ${AVBG[i]}">${emojis[i]}</div>
-      <input id="pn${i}" type="text" placeholder="ผู้เล่น ${i+1}" value="${name}" maxlength="14"/>
-    </div>`;
+function initAudio(){
+  if(!audioCtx){
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(AudioContext) audioCtx = new AudioContext();
   }
-  document.getElementById('playerRows').innerHTML=h;
-}
-
-// ══ TABS ════════════════════════════════════════
-function showTab(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id)?.classList.add('active');
-  const map={setup:0,game:1,rr:1,hist:2};
-  document.querySelectorAll('.nav-tab')[map[id]]?.classList.add('active');
-  if(id==='hist') renderHist();
-  if(id==='rr') renderRR();
-}
-
-// ══ TARGET ═══════════════════════════════════════
-function selTarget(btn,v){
-  document.querySelectorAll('#targetGrid button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on'); target=v;
-}
-
-// ══ TIMER SETUP ═══════════════════════════════════
-function toggleTimer(){
-  useTimer=!useTimer;
-  document.getElementById('timerToggle').classList.toggle('on',useTimer);
-  document.getElementById('timerOpts').style.display=useTimer?'block':'none';
-}
-function selT(btn,sec){
-  document.querySelectorAll('#timerPresets button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  if(sec===-1){
-    document.getElementById('customBox').style.display='block';
-    qTimeSec=parseInt(document.getElementById('customSec').value)||12;
-  } else {
-    document.getElementById('customBox').style.display='none';
-    qTimeSec=sec;
-  }
-}
-function qs(s){ document.getElementById('customSec').value=s; qTimeSec=s; }
-
-// ══ START ════════════════════════════════════════
-function handleStart(){
-  const n=mode==='1v1'?2:4;
-  pNames=[];
-  for(let i=0;i<n;i++){
-    const v=document.getElementById('pn'+i)?.value.trim();
-    pNames.push(v||`ผู้เล่น ${i+1}`);
-  }
-  if(mode==='1v1') start1v1();
-  else startRR();
-}
-
-// ══ 1v1 ══════════════════════════════════════════
-function start1v1(i1=0,i2=1){
-  scores=[0,0]; undoStack=[]; gameActive=true;
-  document.getElementById('gN1').textContent=pNames[i1];
-  document.getElementById('gN2').textContent=pNames[i2];
-  document.getElementById('gS1').textContent='0';
-  document.getElementById('gS2').textContent='0';
-  const ml=document.getElementById('gMetaLabel');
-  const mv=document.getElementById('gMetaVal');
-  if(target===0){ ml.textContent='โหมด'; mv.textContent='ไม่จำกัด'; }
-  else { ml.textContent='เป้าหมาย'; mv.textContent=target+' แต้ม'; }
-  stopTimer(); curQ=1; timerSec=qTimeSec;
-  const strip=document.getElementById('timerStrip');
-  strip.classList.toggle('hidden',!useTimer);
-  if(useTimer) updateTimerUI();
-  keepAwake();
-  showTab('game');
-}
-
-function addScore(player,pts){
-  if(!gameActive){ toast('กด "เริ่มเกม" ก่อนนะ!'); return; }
-  undoStack.push([...scores]);
-  scores[player-1]+=pts;
-  const el=document.getElementById('gS'+player);
-  el.textContent=scores[player-1];
-  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
-  if(target>0&&scores[player-1]>=target) setTimeout(()=>triggerWin(player-1),200);
-}
-
-function undoScore(){
-  if(!undoStack.length){ toast('ไม่มีอะไรให้ย้อน'); return; }
-  scores=undoStack.pop();
-  document.getElementById('gS1').textContent=scores[0];
-  document.getElementById('gS2').textContent=scores[1];
-  toast('↩ Undo');
-}
-
-function confirmReset(){
-  if(confirm('Reset สกอร์เกมนี้?')){
-    scores=[0,0]; undoStack=[];
-    document.getElementById('gS1').textContent='0';
-    document.getElementById('gS2').textContent='0';
-    stopTimer(); curQ=1; timerSec=qTimeSec;
-    if(useTimer) updateTimerUI();
-    toast('↺ Reset');
+  if(audioCtx && audioCtx.state === 'suspended'){
+    audioCtx.resume();
   }
 }
 
-function endManual(){
-  if(scores[0]===scores[1]){ toast('สกอร์เสมอ ยังสรุปไม่ได้'); return; }
-  triggerWin(scores[0]>scores[1]?0:1);
-}
+function playTone(freq, type, duration, count=1, interval=0.1){
+  if(!soundEnabled) return;
+  initAudio();
+  if(!audioCtx) return;
 
-// ══ TIMER ════════════════════════════════════════
-function timerToggle(){ timerOn?stopTimer():startTimer(); }
-function startTimer(){
-  if(timerSec<=0) return;
-  timerOn=true;
-  document.getElementById('tPlayBtn').textContent='⏸';
-  timerIv=setInterval(()=>{
-    timerSec--;updateTimerUI();
-    if(timerSec<=0){ stopTimer(); toast(`⏰ Q${curQ} หมดเวลา!`); }
-  },1000);
-}
-function stopTimer(){
-  clearInterval(timerIv);timerIv=null;timerOn=false;
-  const b=document.getElementById('tPlayBtn');
-  if(b) b.textContent='▶';
-}
-function nextQ(){
-  stopTimer();curQ++;timerSec=qTimeSec;updateTimerUI();toast(`Q${curQ} เริ่ม!`);
-}
-function updateTimerUI(){
-  const m=Math.floor(timerSec/60),s=timerSec%60;
-  const el=document.getElementById('timerClock');
-  el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  el.classList.toggle('warn',timerSec<=10&&timerSec>0);
-  document.getElementById('qBadge').textContent=`Q${curQ}`;
-}
-
-// ══ WIN ═══════════════════════════════════════════
-function triggerWin(idx){
-  gameActive=false; stopTimer();
-  const n1=document.getElementById('gN1').textContent;
-  const n2=document.getElementById('gN2').textContent;
-  const winner=idx===0?n1:n2;
-  const loser=idx===0?n2:n1;
-  document.getElementById('winName').textContent=winner;
-  document.getElementById('winScoreTxt').textContent=`${scores[0]} – ${scores[1]}  ·  ${n1} vs ${n2}`;
-  document.getElementById('winScreen').classList.add('show');
-  saveHist(winner,loser,n1,n2,scores[0],scores[1]);
-  if(mode==='rr'&&rrCurIdx>=0){
-    rrMs[rrCurIdx].s1=scores[0];rrMs[rrCurIdx].s2=scores[1];rrMs[rrCurIdx].done=true;
-    rrCurIdx=-1;
+  for(let i=0; i<count; i++){
+    setTimeout(()=>{
+      try{
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }catch(e){}
+    }, i * (duration + interval) * 1000);
   }
 }
 
-function winNewGame(){
-  document.getElementById('winScreen').classList.remove('show');
-  if(mode==='rr'){ showTab('rr'); }
-  else start1v1();
-}
-function winBack(){
-  document.getElementById('winScreen').classList.remove('show');
-  if(mode==='rr') showTab('rr'); else showTab('setup');
+function soundScore(){ playTone(600, 'sine', 0.15); }
+function soundTick(){ playTone(800, 'triangle', 0.04); }
+function soundBuzzer(){ playTone(220, 'sawtooth', 0.8, 2, 0.08); } // Buzzer หมดเวลา 12 วิ
+
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundBtn').textContent = soundEnabled ? '🔊 เสียง: เปิด' : '🔇 เสียง: ปิด';
+  showToast(soundEnabled ? 'เปิดเสียงแล้ว' : 'ปิดเสียงแล้ว');
 }
 
-// ══ ROUND ROBIN ══════════════════════════════════
-function startRR(){
-  rrPlayers=pNames.slice(0,4);
-  rrMs=[];
-  for(let i=0;i<4;i++) for(let j=i+1;j<4;j++) rrMs.push({p1:i,p2:j,s1:null,s2:null,done:false});
-  rrCurIdx=-1;
-  showTab('rr');
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let defaultSec = 12;
+let clockSec = 12;
+let clockRunning = false;
+let clockTimer = null;
+
+// Roster order: [0] = King/Offense, [1] = Defender, [2] = Next, [3] = After
+let roster = ['ผู้เล่น 1', 'ผู้เล่น 2', 'ผู้เล่น 3', 'ผู้เล่น 4'];
+let playerScores = {
+  'ผู้เล่น 1': 0,
+  'ผู้เล่น 2': 0,
+  'ผู้เล่น 3': 0,
+  'ผู้เล่น 4': 0
+};
+let historyLog = [];
+
+// ══════════════════════════════════════════
+// SHOT CLOCK LOGIC
+// ══════════════════════════════════════════
+function updateClockDisplay(){
+  const el = document.getElementById('clockNum');
+  el.textContent = clockSec;
+  el.classList.toggle('danger', clockSec <= 3 && clockSec > 0);
 }
 
-function renderRR(){
-  renderStand(); renderMatches();
-  const allDone=rrMs.every(m=>m.done);
-  const btn=document.getElementById('rrBtn');
-  if(allDone){ btn.textContent='🏆 Tournament จบแล้ว!'; btn.disabled=true; return; }
-  const next=rrMs.findIndex(m=>!m.done);
-  btn.disabled=false;
-  btn.textContent=`▶ ${rrPlayers[rrMs[next].p1]} vs ${rrPlayers[rrMs[next].p2]}`;
+function startClock(){
+  initAudio();
+  if(clockRunning) return;
+  if(clockSec <= 0) clockSec = defaultSec;
+  clockRunning = true;
+  document.getElementById('clockPlayBtn').textContent = '⏸ หยุด';
+  
+  clockTimer = setInterval(()=>{
+    clockSec--;
+    updateClockDisplay();
+    if(clockSec <= 3 && clockSec > 0) soundTick();
+    if(clockSec <= 0){
+      stopClock();
+      soundBuzzer();
+      if(navigator.vibrate) navigator.vibrate([200, 100, 300]);
+      showToast('🚨 หมดเวลา 12 วินาที!');
+    }
+  }, 1000);
 }
 
-function renderStand(){
-  const stats=rrPlayers.map((name,i)=>({name,i,w:0,l:0,pts:0,gf:0,ga:0}));
-  rrMs.filter(m=>m.done).forEach(m=>{
-    const wi=m.s1>m.s2?m.p1:m.p2, li=m.s1>m.s2?m.p2:m.p1;
-    stats[wi].w++;stats[wi].pts+=2;stats[li].l++;stats[li].pts+=1;
-    stats[m.p1].gf+=m.s1;stats[m.p1].ga+=m.s2;
-    stats[m.p2].gf+=m.s2;stats[m.p2].ga+=m.s1;
+function stopClock(){
+  clearInterval(clockTimer);
+  clockTimer = null;
+  clockRunning = false;
+  document.getElementById('clockPlayBtn').textContent = '▶ เริ่ม';
+}
+
+function toggleClock(){
+  if(clockRunning) stopClock(); else startClock();
+}
+
+function resetClock(autoStart=true){
+  stopClock();
+  clockSec = defaultSec;
+  updateClockDisplay();
+  if(autoStart) startClock();
+}
+
+function resetClockTo(sec){
+  stopClock();
+  clockSec = sec;
+  updateClockDisplay();
+  startClock();
+}
+
+// ══════════════════════════════════════════
+// 1-ON-1 KING OF COURT RULES
+// ══════════════════════════════════════════
+
+// บันทึก Log สำหรับ Undo
+function saveStateForUndo(){
+  historyLog.push({
+    roster: [...roster],
+    scores: {...playerScores},
+    clockSec: clockSec
   });
-  stats.sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
-  const rc=['r1','r2','r3','r4'];
-  document.getElementById('rrStand').innerHTML=stats.map((s,r)=>`
-    <div class="stand-row">
-      <div class="stand-rank ${rc[r]}">${r+1}</div>
-      <div class="stand-name" style="color:${COLORS[s.i]}">${s.name}</div>
-      <div class="stand-stats">
-        <span><span class="stat-val">${s.w}</span><span class="stat-lbl">W</span></span>
-        <span><span class="stat-val">${s.l}</span><span class="stat-lbl">L</span></span>
-        <span><span class="stat-val">${s.pts}</span><span class="stat-lbl">pt</span></span>
-      </div>
-    </div>`).join('');
+  if(historyLog.length > 20) historyLog.shift();
 }
 
-function renderMatches(){
-  document.getElementById('rrMatches').innerHTML=rrMs.map((m,i)=>{
-    const isCur=!m.done&&rrMs.slice(0,i).every(x=>x.done);
-    const cls=m.done?'done':isCur?'current':'pending';
-    const scoreHtml=m.done
-      ?`<div class="m-score done-score">${m.s1}–${m.s2}</div>`
-      :`<div class="m-score vs-score">VS</div>`;
-    return `<div class="match-item ${cls}">
-      <div class="m-dot"></div>
-      <div class="m-name left" style="color:${COLORS[m.p1]}">${rrPlayers[m.p1]}</div>
-      ${scoreHtml}
-      <div class="m-name right" style="color:${COLORS[m.p2]}">${rrPlayers[m.p2]}</div>
-    </div>`;
-  }).join('');
+function undoLast(){
+  if(!historyLog.length){ showToast('ไม่มีรายการย้อนกลับ'); return; }
+  const last = historyLog.pop();
+  roster = last.roster;
+  playerScores = last.scores;
+  clockSec = last.clockSec;
+  updateUI();
+  updateClockDisplay();
+  showToast('↩ ย้อนกลับสำเร็จ');
 }
 
-function playNextMatch(){
-  const idx=rrMs.findIndex(m=>!m.done);
-  if(idx<0) return;
-  rrCurIdx=idx;
-  const m=rrMs[idx];
-  scores=[0,0];undoStack=[];gameActive=true;
-  document.getElementById('gN1').textContent=rrPlayers[m.p1];
-  document.getElementById('gN2').textContent=rrPlayers[m.p2];
-  document.getElementById('gS1').textContent='0';
-  document.getElementById('gS2').textContent='0';
-  document.getElementById('gMetaLabel').textContent='เป้าหมาย';
-  document.getElementById('gMetaVal').textContent=target===0?'ไม่จำกัด':target+' แต้ม';
-  stopTimer();curQ=1;timerSec=qTimeSec;
-  document.getElementById('timerStrip').classList.toggle('hidden',!useTimer);
-  if(useTimer) updateTimerUI();
-  keepAwake();
-  showTab('game');
+// ยิงลง: ผู้บุกได้แต้ม + ครองแป้นต่อ + รีเซ็ต 12 วิ
+function onShotScored(){
+  saveStateForUndo();
+  const king = roster[0];
+  playerScores[king] = (playerScores[king] || 0) + 1;
+  soundScore();
+  if(navigator.vibrate) navigator.vibrate(50);
+  resetClock(true);
+  updateUI();
+  showToast(`🏀 ${king} ยิงลง! (+1) ครองแป้นต่อ`);
 }
 
-// ══ HISTORY ══════════════════════════════════════
-function saveHist(winner,loser,p1,p2,s1,s2){
-  const arr=JSON.parse(localStorage.getItem('bbH')||'[]');
-  arr.unshift({winner,loser,p1,p2,s1,s2,
-    d:new Date().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})});
-  if(arr.length>50) arr.pop();
-  localStorage.setItem('bbH',JSON.stringify(arr));
+// ยิงไม่ลง: ผู้บุกไปต่อท้ายคิว คนรับขึ้นมาเป็นคนบุก คนคิวถัดไปเข้ามาเป็นคนรับ
+function onShotMissed(){
+  saveStateForUndo();
+  const oldKing = roster.shift(); // คนบุกหลุดไปท้ายคิว
+  roster.push(oldKing);
+  resetClock(true);
+  updateUI();
+  showToast(`❌ ยิงไม่ลง! ${roster[0]} ครองแป้นแทน`);
 }
 
-function renderHist(){
-  const arr=JSON.parse(localStorage.getItem('bbH')||'[]');
-  const wrap=document.getElementById('histWrap');
-  if(!arr.length){
-    wrap.innerHTML=`<div class="hist-empty"><div class="big-icon">📋</div>
-      <p>ยังไม่มีประวัติ</p>
-      <p style="font-size:.78rem">เล่นแล้วจบเกมจะบันทึกอัตโนมัติ</p></div>`;
-    return;
-  }
-  const wins={};
-  arr.forEach(g=>wins[g.winner]=(wins[g.winner]||0)+1);
-  const lead=Object.entries(wins).sort((a,b)=>b[1]-a[1]);
-  const med=['🥇','🥈','🥉'];
-  let h=`<div class="leader-list">
-    <div class="card-title">🏅 ลีดเดอร์บอร์ด</div>
-    ${lead.map(([n,w],i)=>`<div class="leader-row">
-      <div class="leader-left">${med[i]||'  '} ${n}</div>
-      <div class="leader-wins">${w} ชนะ</div>
-    </div>`).join('')}
-  </div>
-  <div style="font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">ประวัติแมตช์</div>
-  ${arr.map(g=>`<div class="hist-card">
-    <span class="hist-icon">🏆</span>
-    <div class="hist-info">
-      <div class="hist-players">${g.winner} ชนะ ${g.loser}</div>
-      <div class="hist-result">${g.p1} vs ${g.p2}</div>
-      <div class="hist-date">${g.d}</div>
+// สลับคนป้องกัน (เช่น คนบุกยิงลง แต่อยากเปลี่ยนคนรับใหม่เข้ามาท้าชิง)
+function rotateDefender(){
+  saveStateForUndo();
+  // roster[1] (คนรับเก่า) หลุดไปท้ายคิว, roster[2] เข้ามาแทน
+  const oldDefender = roster.splice(1, 1)[0];
+  roster.push(oldDefender);
+  resetClock(true);
+  updateUI();
+  showToast(`🔄 ${roster[1]} เข้ามาท้าชิง`);
+}
+
+// เพิ่มแต้มแบบกำหนดเอง (+1, +2, +3)
+function addPoint(playerSlot, pts){
+  saveStateForUndo();
+  const pName = roster[playerSlot];
+  playerScores[pName] = (playerScores[pName] || 0) + pts;
+  soundScore();
+  resetClock(true);
+  updateUI();
+}
+
+// ══════════════════════════════════════════
+// UI UPDATES
+// ══════════════════════════════════════════
+function updateUI(){
+  document.getElementById('p1Name').textContent = roster[0];
+  document.getElementById('p1Score').textContent = playerScores[roster[0]] || 0;
+
+  document.getElementById('p2Name').textContent = roster[1];
+  document.getElementById('p2Score').textContent = playerScores[roster[1]] || 0;
+
+  document.getElementById('benchNext').textContent = roster[2];
+  document.getElementById('benchAfter').textContent = roster[3];
+
+  renderLeaderboard();
+}
+
+function renderLeaderboard(){
+  const container = document.getElementById('leaderboardList');
+  if(!container) return;
+  const sorted = Object.entries(playerScores).sort((a,b)=>b[1]-a[1]);
+  const medals = ['🥇','🥈','🥉','4️⃣'];
+  container.innerHTML = sorted.map(([name, pts], i)=>`
+    <div class="l-row">
+      <div class="l-name">${medals[i]} ${name}</div>
+      <div class="l-pts">${pts} แต้ม</div>
     </div>
-    <div class="hist-score-badge">${g.s1}–${g.s2}</div>
-  </div>`).join('')}
-  <button class="clear-hist-btn" onclick="clearHist()">🗑 ล้างประวัติทั้งหมด</button>`;
-  wrap.innerHTML=h;
+  `).join('');
 }
 
-function clearHist(){
-  if(confirm('ล้างประวัติทั้งหมด?')){
-    localStorage.removeItem('bbH'); renderHist(); toast('ล้างประวัติแล้ว');
+function clearStats(){
+  if(confirm('รีเซ็ตแต้มผู้เล่นทุกคนเป็น 0?')){
+    Object.keys(playerScores).forEach(k => playerScores[k] = 0);
+    historyLog = [];
+    updateUI();
+    showToast('ล้างแต้มเรียบร้อย');
   }
 }
 
-// ══ TOAST ════════════════════════════════════════
-let tT;
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1800);
+// ══════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════
+function setDefaultSeconds(sec, btn){
+  document.querySelectorAll('.btn-sec-sel').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  defaultSec = sec;
+  clockSec = sec;
+  updateClockDisplay();
 }
+
+function applySettingsAndStart(){
+  for(let i=0; i<4; i++){
+    const val = document.getElementById(`nameIn${i}`).value.trim();
+    if(val) roster[i] = val;
+    if(playerScores[roster[i]] === undefined) playerScores[roster[i]] = 0;
+  }
+  updateUI();
+  resetClock(false);
+  switchTab('game');
+  showToast('บันทึกและเริ่มเล่น!');
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION & HELPERS
+// ══════════════════════════════════════════
+function switchTab(tabId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`tab-${tabId}`).classList.add('active');
+
+  const tabIndex = {game:0, settings:1, history:2}[tabId];
+  document.querySelectorAll('.nav-pill')[tabIndex].classList.add('active');
+
+  if(tabId === 'history') renderLeaderboard();
+}
+
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+// Initialize
+updateUI();
+updateClockDisplay();
 </script>
 </body>
 </html>
