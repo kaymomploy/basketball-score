@@ -10,6 +10,7 @@
 <!-- Apple Touch Icon (Basketball Vector) -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%23111116'/%3E%3Ccircle cx='256' cy='256' r='180' fill='%23ff5e00'/%3E%3Cpath d='M256 76v360M76 256h360M128 128c64 64 64 192 0 256M384 128c-64 64-64 192 0 256' stroke='%23000' stroke-width='16' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"/>
 <link rel="manifest" href="manifest.json"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>🏀 1-on-1 12s King of the Court</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -265,6 +266,7 @@ body{
     <div class="court-status">
       <span id="matchInfo">👑 ครองแป้น: ยิงลงอยู่ต่อ</span>
       <div class="status-indicators">
+        <span class="wake-badge" id="liveBadge" style="background:rgba(10,132,255,0.18);color:var(--blue)">☁️ กำลังเชื่อมต่อ...</span>
         <span class="wake-badge" id="wakeBadge">📱 จอสว่าง</span>
         <button class="sound-toggle-btn" id="soundBtn" onclick="toggleSound()">🔊 เสียง: เปิด</button>
       </div>
@@ -746,10 +748,117 @@ function showToast(msg){
   toastTimer = setTimeout(()=>t.classList.remove('show'), 1600);
 }
 
+// ══════════════════════════════════════════
+// SUPABASE REALTIME CLIENT
+// ══════════════════════════════════════════
+const SUPABASE_URL = "https://uygmmtxewwlvsiwielio.supabase.co";
+const SUPABASE_KEY = "sb_publishable_m3CmnHMEaS0b_bUqh69sKA__qkbRpyl";
+let sbClient = null;
+let isRemoteUpdating = false;
+
+function initSupabase(){
+  if(window.supabase){
+    try{
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      fetchSessionState();
+      subscribeRealtime();
+    }catch(e){
+      console.error(e);
+      setLiveBadge(false, '❌ เชื่อมต่อไม่ได้');
+    }
+  }
+}
+
+function setLiveBadge(isLive, text){
+  const el = document.getElementById('liveBadge');
+  if(!el) return;
+  if(isLive){
+    el.style.background = 'rgba(48,209,88,0.18)';
+    el.style.color = 'var(--green)';
+    el.textContent = '🟢 Live Sync';
+  } else {
+    el.style.background = 'rgba(255,69,58,0.18)';
+    el.style.color = 'var(--red)';
+    el.textContent = text || '🔴 ออฟไลน์';
+  }
+}
+
+async function fetchSessionState(){
+  if(!sbClient) return;
+  try{
+    const { data, error } = await sbClient.from('court_sessions').select('*').eq('id', 'main').single();
+    if(data && !error){
+      applyRemoteData(data);
+      setLiveBadge(true);
+    }
+  }catch(err){
+    console.error(err);
+  }
+}
+
+function subscribeRealtime(){
+  if(!sbClient) return;
+  sbClient
+    .channel('court_channel')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'court_sessions', filter: 'id=eq.main' }, payload => {
+      if(payload.new){
+        applyRemoteData(payload.new);
+        showToast('📲 ข้อมูลอัปเดตสดจากเพื่อน');
+      }
+    })
+    .subscribe((status)=>{
+      if(status === 'SUBSCRIBED'){
+        setLiveBadge(true);
+      }
+    });
+}
+
+function applyRemoteData(d){
+  isRemoteUpdating = true;
+  if(d.roster && Array.isArray(d.roster)) roster = d.roster;
+  if(d.scores) playerScores = d.scores;
+  if(d.best_streaks) playerBestStreaks = d.best_streaks;
+  if(typeof d.king_streak === 'number') currentKingStreak = d.king_streak;
+  if(typeof d.clock_sec === 'number' && !clockRunning){
+    clockSec = d.clock_sec;
+    updateClockDisplay();
+  }
+  updateUI();
+  isRemoteUpdating = false;
+}
+
+let syncDebounce = null;
+function syncToSupabase(){
+  if(!sbClient || isRemoteUpdating) return;
+  clearTimeout(syncDebounce);
+  syncDebounce = setTimeout(async ()=>{
+    try{
+      await sbClient.from('court_sessions').update({
+        roster: roster,
+        scores: playerScores,
+        best_streaks: playerBestStreaks,
+        king_streak: currentKingStreak,
+        clock_sec: clockSec,
+        updated_at: new Date().toISOString()
+      }).eq('id', 'main');
+    }catch(e){
+      console.error('Sync failed', e);
+    }
+  }, 300);
+}
+
+// Wrap updateUI to trigger sync
+const originalUpdateUI = updateUI;
+updateUI = function(){
+  originalUpdateUI();
+  syncToSupabase();
+};
+
 // Init
 requestWakeLock();
 updateUI();
 updateClockDisplay();
+initSupabase();
 </script>
 </body>
 </html>
