@@ -328,16 +328,16 @@ body{
     <!-- Actions for 12s 1-on-1 -->
     <div class="court-action-row">
       <button class="btn-big-action btn-scored" onclick="onShotScored()">
-        🏀 ยิงลง (+1 & ↺ 12s)
+        🏀 ยิงลง (+1 & เปลี่ยนคนกัน)
       </button>
       <button class="btn-big-action btn-missed" onclick="onShotMissed()">
-        ❌ ยิงไม่ลง (สลับคน)
+        ❌ ยิงไม่ลง (คนกันขึ้นครอง)
       </button>
     </div>
     
     <div class="court-action-row">
       <button class="btn-big-action btn-rotate" onclick="rotateDefender()">
-        🔄 สลับคนรับเข้ามาใหม่
+        🔄 สลับคนรับคิวถัดไป
       </button>
       <button class="btn-big-action" style="background:var(--card2);color:#aaa;flex:0.6" onclick="undoLast()">
         ↩ ย้อนกลับ
@@ -579,10 +579,12 @@ function undoLast(){
   showToast('↩ ย้อนกลับสำเร็จ');
 }
 
-// ยิงลง: ผู้บุกได้แต้ม + Streak เพิ่ม + รีเซ็ต 12 วิ
+// ยิงลง: ผู้บุกได้แต้ม + ครองแป้นต่อ + คนกันโดนเปลี่ยนออกไปต่อท้ายคิว + คนคิวถัดไปเข้ามากันแทน
 function onShotScored(){
   saveStateForUndo();
   const king = roster[0];
+  const oldDefender = roster[1];
+
   playerScores[king] = (playerScores[king] || 0) + 1;
   currentKingStreak++;
 
@@ -590,12 +592,16 @@ function onShotScored(){
     playerBestStreaks[king] = currentKingStreak;
   }
 
+  // คนกันโดนเปลี่ยนออกไปต่อท้ายคิว คนในคิว (roster[2]) ขึ้นมาแทนตำแหน่งคนกัน (roster[1])
+  const removedDef = roster.splice(1, 1)[0];
+  roster.push(removedDef);
+
   if(currentKingStreak >= 2){
     soundFire();
-    showToast(`🔥 ${king} ON FIRE x${currentKingStreak}!`);
+    showToast(`🔥 ${king} ON FIRE x${currentKingStreak}! (เปลี่ยนคนกัน ➔ ${roster[1]})`);
   } else {
     soundScore();
-    showToast(`🏀 ${king} ยิงลง! (+1) ครองแป้นต่อ`);
+    showToast(`🏀 ${king} ยิงลง! (+1) เปลี่ยนคนกัน ➔ ${roster[1]}`);
   }
 
   if(navigator.vibrate) navigator.vibrate(currentKingStreak >= 2 ? [60, 40, 80] : 50);
@@ -603,15 +609,17 @@ function onShotScored(){
   updateUI();
 }
 
-// ยิงไม่ลง: ผู้บุกหลุดคิว, Streak รีเซ็ตเป็น 0
+// ยิงไม่ลง: ผู้บุกยิงพลาดโดนเปลี่ยนออกไปต่อท้ายคิว, คนกันขึ้นมาเป็นคนบุกครองแป้นแทน, คนคิวถัดไปเข้ามาเป็นคนกัน
 function onShotMissed(){
   saveStateForUndo();
-  currentKingStreak = 0;
-  const oldKing = roster.shift();
-  roster.push(oldKing);
+  const oldKing = roster.shift(); // คนบุกหลุดคิว
+  roster.push(oldKing);           // ไปต่อท้ายคิว
+  currentKingStreak = 0;          // รีเซ็ต streak คนบุกเก่า
+
+  soundScore();
   resetClock(true);
   updateUI();
-  showToast(`❌ ยิงไม่ลง! ${roster[0]} ครองแป้นแทน`);
+  showToast(`❌ ยิงไม่ลง! ${roster[0]} ขึ้นครองแป้นแทน`);
 }
 
 // สลับคนรับใหม่ (คนบุกยิงลง แต่อยากเปลี่ยนคนรับใหม่เข้ามา)
